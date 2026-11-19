@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+@layer components {
+  .select {
+    @apply rounded-md border border-gray-300 px-2 py-1.5 text-sm disabled:bg-gray-100;
+  }
+  .input {
+    @apply w-full rounded-md border border-gray-300 px-3 py-2 text-sm disabled:bg-gray-100;
+  }
+}

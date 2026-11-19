@@ -1,0 +1,105 @@
+{
+  "name": "grandgolf-app",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test": "vitest run",
+    "test:integration": "playwright test",
+    "test:e2e": "playwright test -c playwright.e2e.config.ts",
+    "typecheck": "tsc --noEmit",
+    "electron:compile": "tsc -p tsconfig.electron.json",
+    "electron:start": "npm run build && npm run electron:compile && electron .",
+    "electron:build": "npm run build && npm run electron:compile && electron-builder --publish=never",
+    "electron:build:mac": "npm run build && npm run electron:compile && electron-builder --mac --publish=never",
+    "electron:build:win": "npm run build && npm run electron:compile && electron-builder --win --publish=never"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "next": "14.2.35",
+    "react": "^18",
+    "react-dom": "^18"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.52.0",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "electron": "^45.3.4",
+    "electron-builder": "^26.18.1",
+    "eslint": "^8",
+    "eslint-config-next": "14.2.35",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5",
+    "vitest": "^3.2.7"
+  },
+  "description": "グランドゴルフ大会運営管理システム",
+  "author": "GrandGolf",
+  "main": "dist-electron/main.js",
+  "build": {
+    "appId": "jp.grandgolf.app",
+    "productName": "グランドゴルフしようよ",
+    "copyright": "Copyright © 2026",
+    "asar": false,
+    "directories": {
+      "output": "dist-installer"
+    },
+    "files": [
+      "dist-electron/**/*",
+      ".next/**/*",
+      "!.next/cache/**/*",
+      "next.config.mjs",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "docs/操作手順書.md",
+        "to": "操作手順書.md"
+      }
+    ],
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ],
+      "category": "public.app-category.sports",
+      "identity": "-",
+      "artifactName": "GrandGolf-${version}-mac-${arch}.${ext}"
+    },
+    "dmg": {
+      "title": "GrandGolf ${version}"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "GrandGolf-${version}-win-${arch}-setup.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": true,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "グランドゴルフしようよ"
+    }
+  },
+  "engines": {
+    "node": ">=18.18.0"
+  }
+}

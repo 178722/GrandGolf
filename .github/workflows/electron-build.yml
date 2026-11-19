@@ -1,0 +1,73 @@
+# インストーラ（macOS: .dmg / Windows: .exe）のビルド。
+# 開発コンテナ（Linux）ではmacOS/Windows向け配布物を生成できないため、GitHub Actions上でビルドする。
+# - workflow_dispatch（手動実行）または installer-test ブランチへのpush：リリース前の試験ビルド。
+#   成果物はActionsのArtifactsに保存する
+# - v* タグのpush：リリースビルド。成果物をGitHub Releaseに添付する
+name: electron-build
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - installer-test
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Apple シリコン（arm64）のmacOSランナーは混雑により割り当てられず取り消されることがあったため、
+          # Intel版ランナーでビルドする（arm64版・x64版のdmgとも、Intel版ランナー上で作成できる）
+          - os: macos-15-intel
+            script: electron:build:mac
+            files: dist-installer/*.dmg
+          - os: windows-latest
+            script: electron:build:win
+            files: dist-installer/*.exe
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: 依存パッケージのインストール
+        run: npm ci
+
+      - name: インストーラのビルド
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run ${{ matrix.script }} 2>&1 | tee build.log
+        env:
+          # macOSはpackage.jsonの build.mac.identity: "-" によりアドホック署名する（Apple Developer IDでの署名・公証は行わない）
+          NEXT_TELEMETRY_DISABLED: '1'
+
+      # ビルド失敗時、ログ末尾をエラーアノテーションとして出力する（ログ本体の参照には認証が必要なため）
+      - name: ビルド失敗時のログ出力
+        if: failure()
+        shell: bash
+        run: |
+          tail -n 60 build.log | sed 's/%/%25/g' | awk 'BEGIN{ORS="%0A"} {print}' > tail.txt || true
+          echo "::error title=build.log（末尾60行）::$(cat tail.txt)"
+
+      - name: 成果物の保存（Artifacts）
+        uses: actions/upload-artifact@v4
+        with:
+          name: installer-${{ matrix.os }}
+          path: ${{ matrix.files }}
+          if-no-files-found: error
+
+      - name: GitHub Releaseへの添付（タグpush時のみ）
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ matrix.files }}
